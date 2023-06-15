@@ -1,6 +1,9 @@
 package org.example.part4_Threads.example;
 
+import javax.swing.*;
+import java.awt.*;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 
 
 public class ThreadLister {
@@ -27,15 +30,54 @@ public class ThreadLister {
         g.enumerate(threads, false);
         g.enumerate(groups, false);
 
-        out.println(indent + " Группа потоков исполнения: " + g.getName());
+        out.println(indent + " Группа потоков исполнения: " + g.getName() +
+                " Наивысший приоритет: " + g.getMaxPriority());
+
+        for (int i = 0; i < num_threads; i++)
+            printThreadInfo(out, threads[i], indent + "    ");
+
+        for (int i = 0; i < num_groups; i++)
+            printGroupInfo(out, groups[i], indent + "    ");
+
     }
 
     // Находим корневую группу и рекурсивно распечатываем ее содержимое
     public static void listAllThreads(PrintWriter out) {
+        ThreadGroup current_thread_group;
+        ThreadGroup root_thread_group;
+        ThreadGroup parent;
 
+        // Получаем группу текущего потока исполнения
+        current_thread_group = Thread.currentThread().getThreadGroup();
+
+        // Ищем корневую группу
+        root_thread_group = current_thread_group;
+        parent = root_thread_group.getParent();
+
+        while (parent != null) {
+            root_thread_group = parent;
+            parent =  parent.getParent();
+        }
+
+        // Рекурсивно ее распечатываем
+        printGroupInfo(out, root_thread_group, "");
     }
 
     public static void main(String[] args) {
+        JFrame frame = new JFrame("ThreadLister Demo");
+        JTextArea textArea = new JTextArea();
+        frame.getContentPane().add(new JScrollPane(textArea), BorderLayout.CENTER);
+        frame.setSize(500, 400);
+        frame.setVisible(true);
 
+        // Получаем строку threadListing (распечатку потоков исполнения)
+        StringWriter sout = new StringWriter();
+        PrintWriter out = new PrintWriter(sout);
+        ThreadLister.listAllThreads(out);
+
+        out.close();
+        String threadListing = sout.toString();
+
+        textArea.setText(threadListing);
     }
 }
